@@ -12,7 +12,7 @@ export default function Grid({ createUserAccount, isLoading, shippingDetails, is
     }
   }, []);
 
-  const endPointUrl = 'https://techthoth-stripe-server.onrender.com/';
+  const endPointUrl = 'https://techthoth-stripe-server.onrender.com/create-checkout-session';
   const secretKey = 'sk_test_2IIZj9qvETFVO3EvJYJHAUQ100SCzRfnk5';
 
   const requestBodyObject = {
@@ -21,8 +21,8 @@ export default function Grid({ createUserAccount, isLoading, shippingDetails, is
     productName: 'Lets create products Check out',
     mode: 'payment',
     paymentMethod: 'card',
-    successUrl: 'https://lets-create-jewelry.vercel.app/thank-you',
-    cancelUrl: 'https://lets-create-jewelry.vercel.app/payment-error',
+    successUrl: 'http://localhost:5173/thank-you',
+    cancelUrl: 'http://localhost:5173/payment-error',
     quantity: 1,
     currency: 'usd'
   };
@@ -55,8 +55,9 @@ export default function Grid({ createUserAccount, isLoading, shippingDetails, is
           }
           return response.json().then(json => Promise.reject(json));
         })
-        .then(({ url }) => {
-          window.location.href = url;
+        .then(({ url, sessionId }) => {
+          localStorage.setItem('sessionId', sessionId);
+          window.location = url
         })
         .catch(err => {
           console.error('An Error Occurred:', err.message);

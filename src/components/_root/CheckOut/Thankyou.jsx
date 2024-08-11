@@ -2,13 +2,51 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import emailjs from '@emailjs/browser';
 import { toast } from 'react-toastify';
+import { checkPaymentStatus } from '../../../Controller';
 
 const Thankyou = () => {
+
   const [productOrdered, setProductOrdered] = useState([]);
   const [adminMessage, setAdminMessage] = useState({});
+  const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false); // New state to track payment success
 
-  let shippingDetails = {};
+  //=======================================//
+  //==========ALERT PAYMENT STATUS========//
+  //=====================================//
   
+  const alertPaymentStatus = async () => {
+    try {
+      const status = await checkPaymentStatus();
+      console.log(status);
+
+      if (status === 'paid') {
+        toast.success('Payment confirmed');
+        setIsPaymentSuccessful(true); // Set payment as successful
+      } else {
+        toast.error('Your payment is not correct');
+        setIsPaymentSuccessful(false); // Set payment as unsuccessful
+      }
+    } catch (error) {
+      toast.error('Error checking payment status');
+      console.error('Error:', error);
+      setIsPaymentSuccessful(false); // Set payment as unsuccessful in case of error
+    }
+  };
+
+  //==================================================//
+  //==================CALL ALERT FUNCTION=============//
+  //==================================================//
+
+  useEffect(() => {
+    alertPaymentStatus();
+  }, []);
+  
+
+  //================================================//
+  //=======INITIALIZE SHIPPING DETAILS OBJECT=======//
+  //================================================//
+  let shippingDetails = {};
+
   try {
     shippingDetails = JSON.parse(localStorage.getItem('shippingDetails') || '{}');
   } catch (error) {
@@ -68,31 +106,30 @@ const Thankyou = () => {
   }, [productOrdered, email, firstName, lastName, phone, country, province, streetAddress, zipCode, town, companyName, additionalInfo]);
 
   useEffect(() => {
-    emailjs.init('1VFd4PpZgAFZUZuju');
+    emailjs.init('cYTlawvh2LD7a6cv5');
   }, []);
 
   const sendAdminMail = () => {
     console.log('Sending admin mail with message:', adminMessage);
-    emailjs.send('service_91h0v7i', 'template_uqe3q9p', adminMessage).then(
+    emailjs.send('service_336ikkh', 'template_gx3pbes', adminMessage).then(
       response => {
-        toast.success("Thanks, we'll respond very soon");
+        // console.log("Thanks, we'll respond very soon");
       },
       error => {
-        toast.error('FAILED... An error occurred!');
-        console.error('EmailJS error:', error);
+        // console.error('EmailJS error:', error);
       }
     );
   };
 
   const sendUserMail = () => {
     console.log('Sending user mail with message:', adminMessage);
-    emailjs.send('service_91h0v7i', 'template_hcc4y26', adminMessage).then(
+    emailjs.send('service_336ikkh', 'template_w7kg68m', adminMessage).then(
       response => {
-        toast.success("Thanks, we'll respond very soon");
+        toast.success("Thanks for your order, Check your mail for more details");
       },
       error => {
-        toast.error('FAILED... An error occurred!');
-        console.error('EmailJS error:', error);
+        // toast.error('FAILED... An error occurred!');
+        // console.error('EmailJS error:', error);
       }
     );
   };
@@ -103,10 +140,11 @@ const Thankyou = () => {
   };
 
   useEffect(() => {
-    if (adminMessage.summary) {
+    if (adminMessage.summary && isPaymentSuccessful) { // Only send emails if payment is successful
       sendBothMails();
     }
-  }, [adminMessage]);
+  }, [adminMessage, isPaymentSuccessful]); // Dependency array includes payment success
+
 
   return (
     <section className='h-lvh w-full bg-[#fff] flex items-center justify-center'>
